@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Printer } from "lucide-react";
 
 const POSPage = () => {
   const { toast } = useToast();
@@ -453,6 +454,63 @@ const POSPage = () => {
     }
   };
   
+  // Handle direct printing
+  const handlePrintDirectly = async () => {
+    try {
+      const config = await db.config.get(1);
+      
+      if (!config?.printerIpAddress) {
+        toast({
+          title: "Erro de configuração",
+          description: "Endereço IP da impressora não configurado",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (receiptUrl) {
+        // Convert HTML receipt to plain text for the thermal printer
+        const lastSales = await db.sales.orderBy("id").reverse().limit(1).toArray();
+        if (lastSales && lastSales.length > 0) {
+          const lastSaleId = lastSales[0].id;
+          const receiptText = generateReceiptText(lastSaleId as number);
+          
+          // Send to printer via middleware
+          fetch(`http://${config.printerIpAddress}:${config.printerPort || 3333}/print`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              receipt: receiptText
+            }),
+          })
+          .then(() => {
+            toast({
+              title: "Cupom enviado",
+              description: "O cupom foi enviado para impressão",
+            });
+          })
+          .catch(err => {
+            console.error('Printer error:', err);
+            toast({
+              title: "Erro de impressão",
+              description: "Não foi possível enviar para a impressora",
+              variant: "destructive",
+            });
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error printing receipt:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível imprimir o cupom",
+        variant: "destructive",
+      });
+    }
+  };
+  
   return (
     <MainLayout>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -799,12 +857,20 @@ const POSPage = () => {
           <div className="text-center py-4">
             <p>Seu cupom não fiscal está pronto.</p>
             <p className="text-sm text-gray-500 mt-1">
-              Você pode baixar uma cópia para impressão posterior.
+              Você pode baixar uma cópia para impressão posterior ou imprimir agora.
             </p>
           </div>
           
-          <DialogFooter>
-            <Button onClick={handleDownloadPdf} className="w-full">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              onClick={handlePrintDirectly} 
+              className="w-full sm:w-auto flex items-center justify-center gap-2"
+              variant="outline"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir Agora
+            </Button>
+            <Button onClick={handleDownloadPdf} className="w-full sm:w-auto">
               Baixar Cupom
             </Button>
           </DialogFooter>
