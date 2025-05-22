@@ -74,7 +74,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild
-                        active={location.pathname === item.url}
+                        isActive={location.pathname === item.url}
                       >
                         <Button
                           variant="ghost"

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layouts/MainLayout";
 import { db, Product, Category, Addon } from "@/lib/db";
@@ -314,25 +313,32 @@ const POSPage = () => {
         paymentMethod,
         cashReceived: paymentMethod === "cash" ? parseFloat(cashReceived) : undefined,
         change: paymentMethod === "cash" ? calculateChange() : undefined,
-        items: items.map(item => ({
-          productId: item.product.id!,
-          productName: item.product.name,
-          quantity: item.quantity,
-          unitPrice: item.product.price,
-          addons: item.selectedAddons.map(addon => ({
-            id: addon.id!,
-            name: addon.name,
-            price: addon.price
-          })),
-          totalPrice: item.totalPrice
-        })),
+        items: [], // We'll populate this after getting the saleId
         createdAt: new Date().toISOString(),
         operatorId: user!.id,
         operatorName: user!.name
       };
       
-      // Save sale to database
+      // Save sale to database to get the ID
       const saleId = await db.sales.add(sale);
+      
+      // Now create and save the sale items with the generated saleId
+      const saleItems = items.map(item => ({
+        saleId: saleId as number,
+        productId: item.product.id!,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice: item.product.price,
+        addons: item.selectedAddons.map(addon => ({
+          id: addon.id!,
+          name: addon.name,
+          price: addon.price
+        })),
+        totalPrice: item.totalPrice
+      }));
+      
+      // Update the sale with items
+      await db.sales.update(saleId, { items: saleItems });
       
       // Generate receipt
       const receiptText = generateReceiptText(saleId as number);

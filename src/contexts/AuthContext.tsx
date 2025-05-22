@@ -90,8 +90,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { password: _, ...userWithoutPassword } = user;
       
-      setUser(userWithoutPassword);
-      localStorage.setItem("acaizen_user", JSON.stringify(userWithoutPassword));
+      // Ensure the id is not undefined to match the User interface
+      const userToSet: User = {
+        id: userWithoutPassword.id!,
+        email: userWithoutPassword.email,
+        name: userWithoutPassword.name,
+        role: userWithoutPassword.role,
+      };
+      
+      setUser(userToSet);
+      localStorage.setItem("acaizen_user", JSON.stringify(userToSet));
       
       toast({
         title: "Login realizado",
