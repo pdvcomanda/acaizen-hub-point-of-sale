@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Printer } from "lucide-react";
+import { Printer, PrinterText } from "lucide-react";
+import { printReceiptFromBrowser } from "@/utils/printUtils";
 
 const POSPage = () => {
   const { toast } = useToast();
@@ -454,7 +455,7 @@ const POSPage = () => {
     }
   };
   
-  // Handle direct printing
+  // Handle direct printing via middleware
   const handlePrintDirectly = async () => {
     try {
       const config = await db.config.get(1);
@@ -500,6 +501,44 @@ const POSPage = () => {
             });
           });
         }
+      }
+    } catch (error) {
+      console.error("Error printing receipt:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível imprimir o cupom",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle browser-based direct printing
+  const handlePrintInBrowser = async () => {
+    try {
+      const lastSales = await db.sales.orderBy("id").reverse().limit(1).toArray();
+      if (lastSales && lastSales.length > 0) {
+        const lastSaleId = lastSales[0].id as number;
+        
+        // Use the utility function to print receipt
+        printReceiptFromBrowser(
+          items,
+          totalAmount,
+          {
+            method: paymentMethod,
+            cashReceived: paymentMethod === "cash" ? parseFloat(cashReceived) : undefined,
+            change: paymentMethod === "cash" ? calculateChange() : undefined,
+          },
+          {
+            name: "AÇAÍ ZEN",
+            customerName: customerName || undefined,
+            orderNumber: lastSaleId,
+          }
+        );
+        
+        toast({
+          title: "Imprimindo cupom",
+          description: "Uma nova janela foi aberta para impressão",
+        });
       }
     } catch (error) {
       console.error("Error printing receipt:", error);
@@ -857,7 +896,10 @@ const POSPage = () => {
           <div className="text-center py-4">
             <p>Seu cupom não fiscal está pronto.</p>
             <p className="text-sm text-gray-500 mt-1">
-              Você pode baixar uma cópia para impressão posterior ou imprimir agora.
+              Você pode baixar uma cópia ou imprimir agora.
+            </p>
+            <p className="text-xs text-amber-600 mt-3 p-2 bg-amber-50 rounded-md">
+              Para impressão automática, configure sua impressora POS-80 como <strong>Genérica / Somente Texto</strong> e defina como <strong>impressora padrão</strong> no Windows.
             </p>
           </div>
           
@@ -868,7 +910,15 @@ const POSPage = () => {
               variant="outline"
             >
               <Printer className="h-4 w-4" />
-              Imprimir Agora
+              Imprimir via Middleware
+            </Button>
+            <Button 
+              onClick={handlePrintInBrowser}
+              className="w-full sm:w-auto flex items-center justify-center gap-2"
+              variant="secondary"
+            >
+              <PrinterText className="h-4 w-4" />
+              Impressão Direta
             </Button>
             <Button onClick={handleDownloadPdf} className="w-full sm:w-auto">
               Baixar Cupom
