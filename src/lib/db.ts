@@ -103,174 +103,196 @@ class AcaizenDatabase extends Dexie {
   }
 }
 
-export const db = new AcaizenDatabase();
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
+
+// Create db only in browser environment
+export const db = isBrowser ? new AcaizenDatabase() : null as any;
 
 // Initialize default store configuration
 export async function initializeStoreConfig() {
-  const configCount = await db.config.count();
-  
-  if (configCount === 0) {
-    await db.config.add({
-      id: 1,
-      storeName: "Açaízen SmartHUB",
-      address: "Rua Arthur Oscar, 220 - Vila Nova, Mansa - RJ",
-      phone: "(24) 9933-9007",
-      instagram: "@acaizenn",
-      facebook: "@açaizen",
-      printerIpAddress: "localhost",
-      printerPort: 3333
-    });
-    console.log("Default store configuration created");
+  if (!isBrowser) {
+    console.log("Store config initialization skipped (not in browser)");
+    return;
+  }
+
+  try {
+    const configCount = await db.config.count();
+    
+    if (configCount === 0) {
+      await db.config.add({
+        id: 1,
+        storeName: "Açaízen SmartHUB",
+        address: "Rua Arthur Oscar, 220 - Vila Nova, Mansa - RJ",
+        phone: "(24) 9933-9007",
+        instagram: "@acaizenn",
+        facebook: "@açaizen",
+        printerIpAddress: "localhost",
+        printerPort: 3333
+      });
+      console.log("Default store configuration created");
+    }
+  } catch (error) {
+    console.error("Failed to initialize store config:", error);
   }
 }
 
 // Initialize some sample categories and products for testing
 export async function initializeSampleData() {
-  const categoriesCount = await db.categories.count();
-  
-  if (categoriesCount === 0) {
-    // Add categories
-    const categories = [
-      {
-        name: "Açaí",
-        description: "Açaí tradicional e especial",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Bebidas",
-        description: "Sucos, refrigerantes e outras bebidas",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Lanches",
-        description: "Sanduíches e outros lanches",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
+  if (!isBrowser) {
+    console.log("Sample data initialization skipped (not in browser)");
+    return;
+  }
 
-    const categoryIds = await db.categories.bulkAdd(categories, { allKeys: true });
+  try {
+    const categoriesCount = await db.categories.count();
     
-    // Add some products
-    const products = [
-      {
-        name: "Açaí Tradicional 300ml",
-        price: 15.90,
-        description: "Açaí puro 300ml",
-        categoryId: categoryIds[0],
-        stock: 100,
-        hasAddons: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Açaí Tradicional 500ml",
-        price: 20.90,
-        description: "Açaí puro 500ml",
-        categoryId: categoryIds[0],
-        stock: 100,
-        hasAddons: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Refrigerante Lata",
-        price: 5.00,
-        description: "Refrigerante em lata",
-        categoryId: categoryIds[1],
-        stock: 50,
-        hasAddons: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Suco Natural",
-        price: 8.00,
-        description: "Suco natural de frutas",
-        categoryId: categoryIds[1],
-        stock: 20,
-        hasAddons: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Sanduíche Natural",
-        price: 12.00,
-        description: "Sanduíche natural com salada",
-        categoryId: categoryIds[2],
-        stock: 15,
-        hasAddons: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
+    if (categoriesCount === 0) {
+      // Add categories
+      const categories = [
+        {
+          name: "Açaí",
+          description: "Açaí tradicional e especial",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Bebidas",
+          description: "Sucos, refrigerantes e outras bebidas",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Lanches",
+          description: "Sanduíches e outros lanches",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ];
 
-    const productIds = await db.products.bulkAdd(products, { allKeys: true });
-    
-    // Add addons for açaí products
-    const addons = [
-      {
-        name: "Granola",
-        price: 2.00,
-        productId: productIds[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Leite Condensado",
-        price: 2.50,
-        productId: productIds[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Banana",
-        price: 1.50,
-        productId: productIds[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Morango",
-        price: 3.00,
-        productId: productIds[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Granola",
-        price: 2.00,
-        productId: productIds[1],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Leite Condensado",
-        price: 2.50,
-        productId: productIds[1],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Banana",
-        price: 1.50,
-        productId: productIds[1],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        name: "Morango",
-        price: 3.00,
-        productId: productIds[1],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    
-    await db.addons.bulkAdd(addons);
-    
-    console.log("Sample data created");
+      const categoryIds = await db.categories.bulkAdd(categories, { allKeys: true });
+      
+      // Add some products
+      const products = [
+        {
+          name: "Açaí Tradicional 300ml",
+          price: 15.90,
+          description: "Açaí puro 300ml",
+          categoryId: categoryIds[0],
+          stock: 100,
+          hasAddons: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Açaí Tradicional 500ml",
+          price: 20.90,
+          description: "Açaí puro 500ml",
+          categoryId: categoryIds[0],
+          stock: 100,
+          hasAddons: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Refrigerante Lata",
+          price: 5.00,
+          description: "Refrigerante em lata",
+          categoryId: categoryIds[1],
+          stock: 50,
+          hasAddons: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Suco Natural",
+          price: 8.00,
+          description: "Suco natural de frutas",
+          categoryId: categoryIds[1],
+          stock: 20,
+          hasAddons: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Sanduíche Natural",
+          price: 12.00,
+          description: "Sanduíche natural com salada",
+          categoryId: categoryIds[2],
+          stock: 15,
+          hasAddons: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ];
+
+      const productIds = await db.products.bulkAdd(products, { allKeys: true });
+      
+      // Add addons for açaí products
+      const addons = [
+        {
+          name: "Granola",
+          price: 2.00,
+          productId: productIds[0],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Leite Condensado",
+          price: 2.50,
+          productId: productIds[0],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Banana",
+          price: 1.50,
+          productId: productIds[0],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Morango",
+          price: 3.00,
+          productId: productIds[0],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Granola",
+          price: 2.00,
+          productId: productIds[1],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Leite Condensado",
+          price: 2.50,
+          productId: productIds[1],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Banana",
+          price: 1.50,
+          productId: productIds[1],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          name: "Morango",
+          price: 3.00,
+          productId: productIds[1],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ];
+      
+      await db.addons.bulkAdd(addons);
+      
+      console.log("Sample data created");
+    }
+  } catch (error) {
+    console.error("Failed to initialize sample data:", error);
   }
 }

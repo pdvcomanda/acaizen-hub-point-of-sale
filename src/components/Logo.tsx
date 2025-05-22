@@ -16,7 +16,7 @@ const Logo: React.FC<LogoProps> = ({ className, size = "medium" }) => {
   return (
     <div className={`flex items-center ${className}`}>
       <img
-        src="/acaizen-logo.png"
+        src="./acaizen-logo.png"
         alt="Açaízen Logo"
         className={`${sizes[size]}`}
         onError={(e) => {

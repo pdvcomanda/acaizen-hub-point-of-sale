@@ -21,6 +21,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to check for browser environment
+const isBrowser = typeof window !== 'undefined';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,9 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const storedUser = localStorage.getItem("acaizen_user");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        if (isBrowser) {
+          const storedUser = localStorage.getItem("acaizen_user");
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
         }
       } catch (error) {
         console.error("Failed to restore authentication", error);
@@ -44,18 +49,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initialize default admin user if no users exist
     const initializeDefaultAdmin = async () => {
       try {
-        const usersCount = await db.users.count();
-        
-        if (usersCount === 0) {
-          await db.users.add({
-            id: "admin-1",
-            email: "pdvzen1@gmail.com",
-            password: "Zen2024", // In a real app, always hash passwords
-            name: "Administrador",
-            role: "admin",
-            createdAt: new Date().toISOString()
-          });
-          console.log("Default admin created");
+        if (isBrowser) {
+          const usersCount = await db.users.count();
+          
+          if (usersCount === 0) {
+            await db.users.add({
+              id: "admin-1",
+              email: "pdvzen1@gmail.com",
+              password: "Zen2024", // In a real app, always hash passwords
+              name: "Administrador",
+              role: "admin",
+              createdAt: new Date().toISOString()
+            });
+            console.log("Default admin created");
+          }
         }
       } catch (error) {
         console.error("Failed to create default admin", error);
@@ -68,6 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      if (!isBrowser) {
+        toast({
+          title: "Erro de ambiente",
+          description: "Funcionalidade disponível apenas no navegador",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       const user = await db.users.where({ email }).first();
 
       if (!user) {
@@ -120,13 +136,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("acaizen_user");
+    if (isBrowser) {
+      localStorage.removeItem("acaizen_user");
+    }
     navigate("/login");
   };
 
   const switchUser = () => {
     setUser(null);
-    localStorage.removeItem("acaizen_user");
+    if (isBrowser) {
+      localStorage.removeItem("acaizen_user");
+    }
     navigate("/login");
   };
 
