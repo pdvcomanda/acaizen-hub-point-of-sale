@@ -44,11 +44,11 @@ const App = () => {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <AuthProvider>
-            <CartProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+          <BrowserRouter>
+            <AuthProvider>
+              <CartProvider>
+                <Toaster />
+                <Sonner />
                 <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/pos" element={<POSPage />} />
@@ -59,9 +59,9 @@ const App = () => {
                   <Route path="/" element={<Navigate to="/login" replace />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </BrowserRouter>
-            </CartProvider>
-          </AuthProvider>
+              </CartProvider>
+            </AuthProvider>
+          </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
